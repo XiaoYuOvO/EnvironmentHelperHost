@@ -1,0 +1,21 @@
+﻿    <Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net6.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+      <PackageReference Include="CsvHelper" Version="30.0.1" />
+      <PackageReference Include="DotNetty.Buffers" Version="0.7.5" />
+      <PackageReference Include="HandyControl" Version="3.4.0" />
+      <PackageReference Include="LiveChartsCore" Version="2.0.0-rc1" />
+      <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc1" />
+      <PackageReference Include="MahApps.Metro" Version="3.0.0-alpha0457" />
+      <PackageReference Include="System.IO.Ports" Version="8.0.0-rc.1.23419.4" />
+    </ItemGroup>
+
+</Project>

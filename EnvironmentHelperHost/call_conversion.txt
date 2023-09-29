@@ -1,0 +1,9 @@
+0               16         24   PacketSize
+*===============*===========*=======*
+|   PacketSize  |  Command  |  Data |
+
+float readHumidity()              //0x01->uint16_t OUT_SIZE:40
+float readTemperature()           //0x02->uint16_t OUT_SIZE:40
+void setSystemTime(long timestamp)//0x03:uint32_t  IN_SIZE:56
+void setTempLimit(int limit)      //0x04:uint16_t  IN_SIZE:40
+int getTempLimit()                //0x05->uint16_t OUT_SIZE:40
