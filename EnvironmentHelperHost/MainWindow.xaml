@@ -35,7 +35,7 @@
                         <mah:NumericUpDown Value="1000" Name="UpdateFrequencyBox"></mah:NumericUpDown>
                         
                         <Label Content="时间更新频率(ms)" BorderBrush="{x:Null}" Background="{x:Null}"></Label>
-                        <mah:NumericUpDown Value="1000" Name="TimeUpdateFrequencyBox"></mah:NumericUpDown>
+                        <mah:NumericUpDown Value="60000" Name="TimeUpdateFrequencyBox"></mah:NumericUpDown>
                         <Label Content="温度阈值(°C)" BorderBrush="{x:Null}" Background="{x:Null}"></Label>
                         <mah:NumericUpDown Value="30" Name="TemperatureThresholdBox"></mah:NumericUpDown>
                         <Button Content="应用" Name="ApplyConfigButton" Click="ApplyConfigButton_OnClick"></Button>

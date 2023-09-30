@@ -27,7 +27,7 @@ namespace EnvironmentHelperHost
         private static readonly SolidColorBrush OpenBrush = new(Colors.Green);
         private static readonly SolidColorBrush CloseBrush = new(Colors.Gray);
         private DeviceController? _controller;
-        private int _timeUpdateTime = 1000;
+        private int _timeUpdateTime = 60000;
         private readonly Thread _timeUpdateThread;
         private readonly RealTimeViewModel _tempModel = new("温度(°C)", SKColors.Gold, -40, 80);
         private readonly RealTimeViewModel _humidityModel = new("湿度(%RH)", SKColors.CornflowerBlue, 0, 100);
@@ -228,7 +228,7 @@ namespace EnvironmentHelperHost
                 return;
             }
 
-            _timeUpdateTime = (int)(TimeUpdateFrequencyBox.Value ?? 1000);
+            _timeUpdateTime = (int)(TimeUpdateFrequencyBox.Value ?? 60000);
             _controller.SetQueryInterval((int)(UpdateFrequencyBox.Value ?? 1000));
             var tempLimit = (float)(TemperatureThresholdBox.Value ?? 30);
             ApplyConfigButton.IsEnabled = false;
