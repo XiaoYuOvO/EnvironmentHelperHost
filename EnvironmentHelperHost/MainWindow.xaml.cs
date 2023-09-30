@@ -85,8 +85,7 @@ namespace EnvironmentHelperHost
                     continue;
                 }
 
-                _controller.SetSystemTime((int)DateTime.Now.Subtract(DateTime.UnixEpoch).TotalSeconds + 1,
-                    () => Growl.Error("无法同步设备时间: 设备超时"));
+                _controller.SetSystemTime((int)DateTime.Now.Subtract(DateTime.UnixEpoch).TotalSeconds + 1);
                
                 SafeSleep(_timeUpdateTime);
             }
@@ -104,10 +103,9 @@ namespace EnvironmentHelperHost
             }
         }
 
-        private void OpenPortButton_OnClick(object sender, RoutedEventArgs e)
+        private async void OpenPortButton_OnClick(object sender, RoutedEventArgs e)
         {
-            lock (this)
-            {
+            
                 OpenPortButton.IsEnabled = false;
                 SerialPortList.IsEnabled = false;
                 var selectedItem = SerialPortList.SelectedItem;
@@ -138,15 +136,17 @@ namespace EnvironmentHelperHost
 
                 try
                 {
-                    _controller.Open();
-                    InitDeviceOpened();
-                    _controller.GetTempLimit(res => this.Invoke(() =>
+                    _controller.Open(); 
+                    await Task.Run(() =>
                     {
-                        _timeoutCount = 0;
-                        _tempLimitCache = res;
-                        TemperatureThresholdBox.Value = _tempLimitCache;
-                    }), () =>
-                        this.Invoke(() => { Growl.Error($"获取温度阈值失败! 设备超时"); }));
+                        _tempLimitCache = _controller.GetTempLimit();
+                        this.Invoke(() =>
+                        {
+                            TemperatureThresholdBox.Value = _tempLimitCache;
+                        });
+                    });
+                    _controller.StartReadTemperature();
+                    InitDeviceOpened();
                 }
                 catch (Exception exception)
                 {
@@ -154,7 +154,6 @@ namespace EnvironmentHelperHost
                     Growl.Error($"无法打开串口! {exception.Message}");
                     ResetDeviceOpenState();
                 }
-            }
         }
 
         private void InitDeviceOpened()
@@ -190,28 +189,26 @@ namespace EnvironmentHelperHost
 
         private void ResetDeviceOpenState()
         {
-            lock (this)
+            ClosePortButton.IsEnabled = false;
+            OpenPortButton.IsEnabled = true;
+            SerialPortList.IsEnabled = true;
+            DeviceStateLabel.Foreground = CloseBrush;
+            DeviceStateLabel.Content = "未开启";
+            try
             {
-                ClosePortButton.IsEnabled = false;
-                OpenPortButton.IsEnabled = true;
-                SerialPortList.IsEnabled = true;
-                DeviceStateLabel.Foreground = CloseBrush;
-                DeviceStateLabel.Content = "未开启";
-                try
-                {
-                    _controller?.Close();
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
-               
-                _normalRecords?.Flush();
-                _normalRecords?.Dispose();
-                _warningRecords?.Flush();
-                _warningRecords?.Dispose();
-                _timeoutCount = 0;
+                _controller?.Close();
             }
+            catch (Exception)
+            {
+                // ignored
+            }
+
+            _normalRecords?.Flush();
+            _normalRecords?.Dispose();
+            _warningRecords?.Flush();
+            _warningRecords?.Dispose();
+            _timeoutCount = 0;
+            
         }
 
         private void ClosePortButton_OnClick(object sender, RoutedEventArgs e)
@@ -232,18 +229,19 @@ namespace EnvironmentHelperHost
             _controller.SetQueryInterval((int)(UpdateFrequencyBox.Value ?? 1000));
             var tempLimit = (float)(TemperatureThresholdBox.Value ?? 30);
             ApplyConfigButton.IsEnabled = false;
-            _controller.SetTempLimit(tempLimit,
-                () => this.Invoke(() =>
-                {
-                    Growl.Info("设置成功!");
-                    ApplyConfigButton.IsEnabled = true;
-                }),
-                () => this.Invoke(() =>
-                {
-                    Growl.Error("无法设置温度阈值: 设备超时");
-                    ApplyConfigButton.IsEnabled = true;
-                })
-            );
+            // _controller.SetTempLimit(tempLimit,
+            //     () => this.Invoke(() =>
+            //     {
+            //         Growl.Info("设置成功!");
+            //         ApplyConfigButton.IsEnabled = true;
+            //     }),
+            //     () => this.Invoke(() =>
+            //     {
+            //         Growl.Error("无法设置温度阈值: 设备超时");
+            //         ApplyConfigButton.IsEnabled = true;
+            //     })
+            // );
+            _controller.SetTempLimit(tempLimit);
             _tempLimitCache = tempLimit;
             _timeUpdateThread.Interrupt();
         }

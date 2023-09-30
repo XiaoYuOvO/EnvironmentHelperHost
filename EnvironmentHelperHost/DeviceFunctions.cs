@@ -162,8 +162,8 @@ namespace EnvironmentHelperHost
 
         public TResult Invoke(SerialPort port, TParma parameters)
         {
-            lock (port)
-            {
+            // lock (port)
+            // {
                 if (!port.IsOpen) throw new InvalidOperationException("Port is not open");
                 //Post command to device
                 // var writeData = new byte[HeaderSize + CommandSize + byteData.Length];
@@ -196,8 +196,8 @@ namespace EnvironmentHelperHost
                 DebugSendBuffer.Instance.Invoke(()=>DebugSendBuffer.Instance.AddData(_sendBuffer.Array,_sendBuffer.WriterIndex));
                 _sendBuffer.Clear();
                 _dataBuffer.Clear();
-                return ReceiveData(port);    
-            }
+                return typeof(TResult) == typeof(VoidResult) ? new TResult() : ReceiveData(port);
+            // }
         }
 
         public DeviceTask<TParma, TResult> CreateTask(SerialPort port,TParma parameters, Action<TResult>? resultCallback = null, Action? timeoutCallback = null)

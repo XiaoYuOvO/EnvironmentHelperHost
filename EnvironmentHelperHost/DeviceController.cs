@@ -32,13 +32,13 @@ public class DeviceController
         {
             while (IsOpen())
             {
-                ReadTemperatureHumidity(  result => SensorDataUpdate?.Invoke(result.Temperature, result.Humidity),
-                    () => Growl.Error("无法获取温度湿度! 设备超时"));
                 try
                 {
+                    var temperatureHumidityResult = ReadTemperatureHumidity();
+                    SensorDataUpdate?.Invoke(temperatureHumidityResult.Temperature, temperatureHumidityResult.Humidity);
                     Thread.Sleep(_interval);
                 }
-                catch (Exception)
+                catch (ThreadInterruptedException)
                 {
                     // ignored
                 }
@@ -53,7 +53,7 @@ public class DeviceController
             {
                 while (_taskQueue.TryDequeue(out var task))
                 {
-                    task?.RunSynchronously();
+                    task?.Start();
                 }
                 try
                 {
@@ -73,8 +73,12 @@ public class DeviceController
     public void Open()
     {
         _serialPort.Open();
+        // _deviceCommunicationThread.Start();
+    }
+
+    public void StartReadTemperature()
+    {
         _temperatureUpdateThread.Start();
-        _deviceCommunicationThread.Start();
     }
 
     public bool IsOpen()
@@ -87,30 +91,24 @@ public class DeviceController
         _serialPort.ErrorReceived += handler;
     }
 
-    private DeviceTask<VoidParameter, TemperatureHumidityResult> ReadTemperatureHumidity(
-        Action<TemperatureHumidityResult> handler, Action? timeoutHandler = null)
+    private TemperatureHumidityResult ReadTemperatureHumidity()
     {
-        return InvokeFunction(DeviceFunctions.ReadTemperatureHumidity, VoidParameter.Instance,handler,
-            timeoutHandler: timeoutHandler);
+        return DeviceFunctions.ReadTemperatureHumidity.Invoke(_serialPort, VoidParameter.Instance);
     }
 
-    public DeviceTask<IntegerParameter, VoidResult> SetSystemTime(int timestamp, Action? timeoutHandler = null)
+    public void SetSystemTime(int timestamp)
     {
-        return InvokeFunction(DeviceFunctions.SetSystemTime, timestamp, timeoutHandler: timeoutHandler);
+        DeviceFunctions.SetSystemTime.Invoke(_serialPort, timestamp);
     }
 
-    public DeviceTask<FloatParameter, VoidResult> SetTempLimit(float limit, Action? resultHandler,
-        Action? timeoutHandler = null)
+    public void SetTempLimit(float limit)
     {
-        return InvokeFunction(DeviceFunctions.SetTempLimit, limit, _ => resultHandler?.Invoke(),
-            timeoutHandler: timeoutHandler);
+        DeviceFunctions.SetTempLimit.Invoke(_serialPort, limit);
     }
 
-    public DeviceTask<VoidParameter, FloatResult> GetTempLimit(Action<FloatResult> resultCallback,
-        Action? timeoutHandler = null)
+    public float GetTempLimit()
     {
-        return InvokeFunction(DeviceFunctions.GetTempLimit, VoidParameter.Instance, resultCallback,
-            timeoutHandler: timeoutHandler);
+        return DeviceFunctions.GetTempLimit.Invoke(_serialPort, VoidParameter.Instance);
     }
 
     private DeviceTask<TParams, TResult> InvokeFunction<TParams, TResult>(DeviceFunction<TParams, TResult> function,
