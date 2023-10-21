@@ -211,11 +211,6 @@ namespace EnvironmentHelperHost
 
             var header = new byte[3];
             port.Read(header, 0, 3);
-            while (header[0] != 0)
-            {
-                RaedToScreenEnd(port);
-                port.Read(header, 0, 3);
-            }
             _readBuffer.WriteBytes(header);
             var length = _readBuffer.ReadShort();
             var commandId = _readBuffer.ReadByte();
@@ -234,18 +229,6 @@ namespace EnvironmentHelperHost
             //Discard them
             port.ReadExisting();
             return deviceResult;
-        }
-
-        private void RaedToScreenEnd(SerialPort port)
-        {
-            int ffCount = 0;
-            while (ffCount < 3)
-            {
-                if (port.ReadByte() == 0xff)
-                {
-                    ffCount++;
-                }
-            }
         }
     }
 }
