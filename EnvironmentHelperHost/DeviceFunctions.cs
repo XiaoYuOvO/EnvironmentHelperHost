@@ -119,16 +119,6 @@ namespace EnvironmentHelperHost
         public float Temperature { get; private set; }
         public float Humidity { get; private set; }
 
-        public TemperatureHumidityResult()
-        {
-        }
-
-        public TemperatureHumidityResult(float temperature, float humidity)
-        {
-            Temperature = temperature;
-            Humidity = humidity;
-        }
-
         public void ReadByteData(IByteBuffer bytes)
         {
             bytes.ReadBytes(FloatBuffer);
@@ -140,14 +130,14 @@ namespace EnvironmentHelperHost
 
     public class DeviceFunction<TParma, TResult> where TParma : IDeviceParameters where TResult : IDeviceResult, new()
     {
-        private static readonly UnpooledByteBufferAllocator PooledByteBufferAllocator = new();
+        private static readonly UnpooledByteBufferAllocator UnpooledByteBufferAllocator = new();
         private const int HeaderSize = 2;
         private const int CommandSize = 1;
         private readonly byte _commandId;
         private readonly string _name;
-        private readonly IByteBuffer _sendBuffer = PooledByteBufferAllocator.DirectBuffer(4096);
-        private readonly IByteBuffer _dataBuffer = PooledByteBufferAllocator.DirectBuffer(4093);
-        private readonly IByteBuffer _readBuffer = PooledByteBufferAllocator.DirectBuffer(4096);
+        private readonly IByteBuffer _sendBuffer = UnpooledByteBufferAllocator.DirectBuffer(4096);
+        private readonly IByteBuffer _dataBuffer = UnpooledByteBufferAllocator.DirectBuffer(4093);
+        private readonly IByteBuffer _readBuffer = UnpooledByteBufferAllocator.DirectBuffer(4096);
 
         public DeviceFunction(byte commandId, string name)
         {
@@ -205,6 +195,7 @@ namespace EnvironmentHelperHost
             return new DeviceTask<TParma, TResult>(port, this, parameters, resultCallback,_ => timeoutCallback?.Invoke());
         }
         
+        
         private TResult ReceiveData(SerialPort port)
         {
             var waitTime = 0;
@@ -220,6 +211,11 @@ namespace EnvironmentHelperHost
 
             var header = new byte[3];
             port.Read(header, 0, 3);
+            while (header[0] != 0)
+            {
+                RaedToScreenEnd(port);
+                port.Read(header, 0, 3);
+            }
             _readBuffer.WriteBytes(header);
             var length = _readBuffer.ReadShort();
             var commandId = _readBuffer.ReadByte();
@@ -238,6 +234,18 @@ namespace EnvironmentHelperHost
             //Discard them
             port.ReadExisting();
             return deviceResult;
+        }
+
+        private void RaedToScreenEnd(SerialPort port)
+        {
+            int ffCount = 0;
+            while (ffCount < 3)
+            {
+                if (port.ReadByte() == 0xff)
+                {
+                    ffCount++;
+                }
+            }
         }
     }
 }

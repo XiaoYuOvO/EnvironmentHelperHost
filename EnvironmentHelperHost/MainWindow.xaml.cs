@@ -86,7 +86,7 @@ namespace EnvironmentHelperHost
                 }
 
                 _controller.SetSystemTime((int)DateTime.Now.Subtract(DateTime.UnixEpoch).TotalSeconds + 1,
-                    () => Growl.Error("无法同步设备时间: 设备超时"));
+                    () => GrowlHelper.Error("无法同步设备时间: 设备超时"));
                
                 SafeSleep(_timeUpdateTime);
             }
@@ -115,7 +115,7 @@ namespace EnvironmentHelperHost
                 _controller = new DeviceController(selectedPortName);
                 _controller.RegisterErrorHandler((_, args) =>
                 {
-                    Growl.Error($"串口异常!: {args.EventType}");
+                    GrowlHelper.Error($"串口异常!: {args.EventType}");
                     if (_warningRecords == null) return;
                     _warningRecords.WriteField($"{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
                     _warningRecords.WriteField($"{args.EventType}");
@@ -132,7 +132,7 @@ namespace EnvironmentHelperHost
                     {
                         ResetDeviceOpenState();
                         _timeoutCount = 0;
-                        Growl.Error("超时次数过多,设备关闭!");
+                        GrowlHelper.Error("超时次数过多,设备关闭!");
                     });
                 };
 
@@ -146,12 +146,12 @@ namespace EnvironmentHelperHost
                         _tempLimitCache = res;
                         TemperatureThresholdBox.Value = _tempLimitCache;
                     }), () =>
-                        this.Invoke(() => { Growl.Error($"获取温度阈值失败! 设备超时"); }));
+                        this.Invoke(() => { GrowlHelper.Error($"获取温度阈值失败! 设备超时"); }));
                 }
                 catch (Exception exception)
                 {
                     Debug.WriteLine(exception);
-                    Growl.Error($"无法打开串口! {exception.Message}");
+                    GrowlHelper.Error($"无法打开串口! {exception.Message}");
                     ResetDeviceOpenState();
                 }
             }
@@ -224,7 +224,7 @@ namespace EnvironmentHelperHost
         {
             if (_controller == null)
             {
-                Growl.Error("未打开设备");
+                GrowlHelper.Error("未打开设备");
                 return;
             }
 
@@ -240,7 +240,7 @@ namespace EnvironmentHelperHost
                 }),
                 () => this.Invoke(() =>
                 {
-                    Growl.Error("无法设置温度阈值: 设备超时");
+                    GrowlHelper.Error("无法设置温度阈值: 设备超时");
                     ApplyConfigButton.IsEnabled = true;
                 })
             );
@@ -264,8 +264,14 @@ namespace EnvironmentHelperHost
 
         private void DisplayCount_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
         {
-            _tempModel.SetMaxPoints((int)(DisplayCount.Value ?? 20));
-            _humidityModel.SetMaxPoints((int)(DisplayCount.Value ?? 20));
+            var displayCountValue = (int)(DisplayCount.Value ?? 20);
+            if (displayCountValue <= 0)
+            {
+                displayCountValue = 20;
+            }
+            _tempModel.SetMaxPoints(displayCountValue);
+            _humidityModel.SetMaxPoints(displayCountValue);
+            DisplayCount.Value = displayCountValue;
         }
 
         private void LogToFileButton_OnClick(object sender, RoutedEventArgs e)

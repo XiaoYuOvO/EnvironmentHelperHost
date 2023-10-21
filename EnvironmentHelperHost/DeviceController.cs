@@ -33,7 +33,7 @@ public class DeviceController
             while (IsOpen())
             {
                 ReadTemperatureHumidity(  result => SensorDataUpdate?.Invoke(result.Temperature, result.Humidity),
-                    () => Growl.Error("无法获取温度湿度! 设备超时"));
+                    () => GrowlHelper.Error("无法获取温度湿度! 设备超时"));
                 try
                 {
                     Thread.Sleep(_interval);

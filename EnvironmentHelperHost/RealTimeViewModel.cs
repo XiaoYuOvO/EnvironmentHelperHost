@@ -108,9 +108,9 @@ public class RealTimeViewModel : ObservableObject
 
     public void SetMaxPoints(int count)
     {
-        if (count < _maxPointCount)
+        if (count < _maxPointCount && _values.Count > 0)
         {
-            for (var i = 0; i < _maxPointCount - count; i++)
+            for (var i = 0; i < _maxPointCount - count - 1; i++)
             {
                 _values.RemoveAt(0);
             }
