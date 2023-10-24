@@ -66,13 +66,14 @@ class DeviceController{
     {method} + SetQueryInterval
     {method} - InvokeFunction<TParams, TResult>
     ==Event==
-    DeviceTimeOut
-    SensorDataUpdate
+    + DeviceTimeOut
+    + SensorDataUpdate
 }
 diamond a
 'diamond b
 }
 class FloatResult {
+    {field} - _value
     + ReadByteData(IByteBuffer byteBuffer)
 }
 class TemperatureHumidityResult{
@@ -82,6 +83,20 @@ class TemperatureHumidityResult{
 }
 class VoidResult{
     + ReadByteData(IByteBuffer byteBuffer)
+}
+
+class FloatParameter{
+    {field} - _value
+    + WriteByteData(IByteBuffer byteBuffer)
+}
+
+class IntegerParameter{
+    {field} - _value
+    + WriteByteData(IByteBuffer byteBuffer)
+}
+
+class VoidParameter{
+    + WriteByteData(IByteBuffer byteBuffer)
 }
 
 static class DeviceFunctions #line.dashed{
@@ -113,13 +128,15 @@ IDeviceParameters <|-- VoidParameter
 IDeviceParameters <|-- IntegerParameter
 IDeviceParameters <|-- FloatParameter
 
-DeviceController::DeviceTimeOut <-left- DeviceTimeoutException : 触发
+DeviceController::DeviceTimeOut <-left- DeviceTimeoutException : 超时抛出并触发
 'DeviceController::_deviceCommunicationThread --> DeviceFunction::Invoke
 DeviceController <-up- DeviceTask : 提交至任务队列
 'DeviceController::__deviceCommunicationThread <-down- DeviceController::_taskQueue
 
 DeviceTimeoutException <-right- DeviceFunction::Invoke
-
+note left of DeviceController
+该类为最高层级API,供外界使用
+end note
 DeviceFunctions <-right- DeviceController
 
 'DeviceController::SetTempLimit -left> b 
@@ -128,7 +145,8 @@ DeviceFunctions <-right- DeviceController
 'DeviceController::SetTempLimit -left> b 
 'b -left-> DeviceController::_taskQueue
 
-DeviceController::SensorDataUpdate <-- a
+DeviceController::SensorDataUpdate <-- a  : 获取到数据后触发
+DeviceController::ReadTemperatureHumidity <-- a  : 定时调用
 a <-left- DeviceController::_temperatureUpdateThread
 
 DeviceTask <-up- DeviceFunction : 创建
