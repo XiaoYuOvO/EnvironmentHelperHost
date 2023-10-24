@@ -1,0 +1,138 @@
+@startuml
+'https://plantuml.com/class-diagram
+skinparam backgroundColor transparent
+skinparam groupInheritance 2
+skinparam classFontColor automatic
+skinparam class {
+ArrowColor #499c54
+BackgroundColor #3c3f41
+BorderColor #436ca6
+}
+
+skinparam arrow{
+    FontColor Black
+}
+
+skinparam ClassAttribute{
+    FontColor White
+}
+
+skinparam ClassStereotype{
+    FontColor White
+}
+
+
+skinparam component YellowGreen
+
+class DeviceTask<TParam extends IDeviceParameters, TResult extends IDeviceResult> <<Task<TResult>>>{
+    
+}
+
+exception DeviceTimeoutException{
+}
+
+class DeviceFunction<TParam extends IDeviceParameters, TResult extends IDeviceResult>{
+    {method} + CreateTask
+    {method} + Invoke
+    {method} - ReceiveData
+}
+
+together{
+interface IDeviceParameters
+{
+    {abstract} void WriteByteData(IByteBuffer byteBuffer)
+}
+
+interface IDeviceResult
+{
+    {abstract} void ReadByteData(IByteBuffer bytes)
+}
+}
+together{
+class DeviceController{
+    {field} - _taskQueue
+    {field} - _interval
+    {field} - _temperatureUpdateThread
+    {field} - _deviceCommunicationThread
+    {field} - _serialPort
+    {method} + Close
+    {method} + Open
+    {method} + IsOpen
+    {method} + ReadTemperatureHumidity
+    {method} + GetTempLimit
+    {method} + SetTempLimit
+    {method} + SetSystemTime
+    {method} + RegisterErrorHandler
+    {method} + SetQueryInterval
+    {method} - InvokeFunction<TParams, TResult>
+    ==Event==
+    DeviceTimeOut
+    SensorDataUpdate
+}
+diamond a
+'diamond b
+}
+class FloatResult {
+    + ReadByteData(IByteBuffer byteBuffer)
+}
+class TemperatureHumidityResult{
+    + ReadByteData(IByteBuffer byteBuffer)
+    {field} + Temperature
+    {field} + Humidity
+}
+class VoidResult{
+    + ReadByteData(IByteBuffer byteBuffer)
+}
+
+static class DeviceFunctions #line.dashed{
+    {field} + GetTempLimit(VoidParameter) -> FloatResult
+    {field} + SetTempLimit(FloatParameter) -> VoidResult
+    {field} + ReadTemperatureHumidity(VoidParameter) -> TemperatureHumidityResult
+    {field} + SetSystemTime(IntegerParameter) -> VoidResult
+}
+
+
+DeviceFunction <|-right- DeviceFunctions::GetTempLimit 
+DeviceFunction <|-right- DeviceFunctions::SetSystemTime 
+DeviceFunction <|-right- DeviceFunctions::SetTempLimit 
+DeviceFunction <|-right- DeviceFunctions::ReadTemperatureHumidity
+ 
+
+DeviceFunction::TResult *-up- FloatResult
+DeviceFunction::TResult *-up- VoidResult
+DeviceFunction::TResult *-up- TemperatureHumidityResult
+DeviceFunction::TParam *-up- VoidParameter
+DeviceFunction::TParam *-up- IntegerParameter
+DeviceFunction::TParam *-up- FloatParameter
+
+
+IDeviceResult <|-- FloatResult
+IDeviceResult <|-- VoidResult
+IDeviceResult <|-- TemperatureHumidityResult
+IDeviceParameters <|-- VoidParameter
+IDeviceParameters <|-- IntegerParameter
+IDeviceParameters <|-- FloatParameter
+
+DeviceController::DeviceTimeOut <-left- DeviceTimeoutException : 触发
+'DeviceController::_deviceCommunicationThread --> DeviceFunction::Invoke
+DeviceController <-up- DeviceTask : 提交至任务队列
+'DeviceController::__deviceCommunicationThread <-down- DeviceController::_taskQueue
+
+DeviceTimeoutException <-right- DeviceFunction::Invoke
+
+DeviceFunctions <-right- DeviceController
+
+'DeviceController::SetTempLimit -left> b 
+'DeviceController::SetTempLimit -left> b 
+'DeviceController::SetTempLimit -left> b 
+'DeviceController::SetTempLimit -left> b 
+'b -left-> DeviceController::_taskQueue
+
+DeviceController::SensorDataUpdate <-- a
+a <-left- DeviceController::_temperatureUpdateThread
+
+DeviceTask <-up- DeviceFunction : 创建
+
+
+
+@enduml
